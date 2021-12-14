@@ -39,7 +39,10 @@ def lastID():
     database = sqlite3.connect('database.db')
     cursor = database.cursor()
     cursor.execute("""SELECT id FROM contacts""")
-    return cursor.fetchall()[-1][-1]
+    if cursor.fetchone() is None:
+        return 0
+    else:
+        return cursor.fetchone()[0]
 
 def listContactsDatabase():
     database = sqlite3.connect('database.db')
