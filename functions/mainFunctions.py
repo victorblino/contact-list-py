@@ -4,6 +4,7 @@ database = sqlite3.connect('database.db')
 cursor = database.cursor()
 
 from functions.databaseFunctions import closeDatabase, addItemDatabase, connectDatabase, countItensDatabase, listContactsDatabase, commitDatabase
+
 def menuOptions():
     print("""
 1. Adicione um novo contato
@@ -93,14 +94,7 @@ def addContact():
         else:
             break
     addItemDatabase(name, ddd, phone)
-    while True:
-        option = input('Deseja adicionar outro contato? (S/N) ').upper().strip()
-        if option not in 'SN':
-            print("Opção inválida. Tente novamente.")
-        if option == 'S':
-            addContact()
-        else:
-            break
+    goAddContact()
     questionMenu()
     
 def deleteContact():
@@ -126,24 +120,17 @@ def deleteContact():
         database.commit()
     except sqlite3.Error as error:
         print(f'Erro ao excluir o contato: {error}')
-    while True:
-        option = input('Deseja excluir outro contato? (S/N) ').upper().strip()
-        if option not in 'SN':
-            print("Opção inválida. Tente novamente.")
-        if option == 'S':
-            deleteContact()
-        else:
-            break
+    goDeleteContact()
     goMenu()
 
 def updateContact():
-    if len(cursor.fetchall()) == 0:
+    if countItensDatabase() == 0:
         print('Não há contatos para atualizar.')
         goMenu()
     else:
         listContactsDatabase()
         while True:
-            IDcontact = input('Insira o ID do contato que deseja atualizar:')
+            IDcontact = input('Insira o ID do contato que deseja atualizar: ')
             if IDcontact == '':
                 print("Por favor, digite um ID válido.")
             elif IDcontact.isdigit() == False:
@@ -157,28 +144,15 @@ def updateContact():
         option = input("""Oque deseja atualizar?
 1. Nome
 2. DDD
-3. Número""")
+3. Número
+R: """)
         while True:
             if option.strip() not in '123':
                 print("Opção inválida. Tente novamente.")
             else:
                 break
-            
         match option:
             case '1':
-                listContactsDatabase()
-                while True:
-                    IDcontact = input('Insira o ID do contato que deseja atualizar:')
-                    if IDcontact == '':
-                        print("Por favor, digite um ID válido.")
-                    elif IDcontact.isdigit() == False:
-                        print("Por favor, digite um ID válido.")
-                    elif countItensDatabase() < int(IDcontact):
-                        print("ID não existe.")
-                    elif int(IDcontact) == 0:
-                        print("Não existe nenhum contato com esse ID.")
-                    else:
-                        break
                 while True:
                     nameInput = input('Novo nome: ')
                     if nameInput.strip() == '':
@@ -191,28 +165,7 @@ def updateContact():
                     database.commit()
                 except sqlite3.Error as error:
                     print(f'Erro ao atualizar o contato: {error}')
-                while True:
-                    option = input('Deseja atualizar outro contato? (S/N) ').upper().strip()
-                    if option not in 'SN':
-                        print("Opção inválida. Tente novamente.")
-                    if option == 'S':
-                        updateContact()
-                    else:
-                        break
             case '2':
-                listContactsDatabase()
-                while True:
-                    IDcontact = input('Insira o ID do contato que deseja atualizar: ')
-                    if IDcontact == '':
-                        print("Por favor, digite um ID válido.")
-                    elif IDcontact.isdigit() == False:
-                        print("Por favor, digite um ID válido.")
-                    elif countItensDatabase() < int(IDcontact):
-                        print("ID não existe.")
-                    elif int(IDcontact) == 0:
-                        print("Não existe nenhum contato com esse ID.")
-                    else:
-                        break
                 while True:
                     ddd = input('Novo DDD: ')
                     if ddd == '':
@@ -230,28 +183,7 @@ def updateContact():
                     database.commit()
                 except sqlite3.Error as error:
                     print(f'Erro ao atualizar o contato: {error}')
-                while True:
-                    option = input('Deseja atualizar outro contato? (S/N) ').upper().strip()
-                    if option not in 'SN':
-                        print("Opção inválida. Tente novamente.")
-                    if option == 'S':
-                        updateContact()
-                    else:
-                        break
             case '3':
-                listContactsDatabase()
-                while True:
-                    IDcontact = input('Insira o ID do contato que deseja atualizar: ')
-                    if IDcontact == '':
-                        print("Por favor, digite um ID válido.")
-                    elif IDcontact.isdigit() == False:
-                        print("Por favor, digite um ID válido.")
-                    elif countItensDatabase() < int(IDcontact):
-                        print("ID não existe.")
-                    elif int(IDcontact) == 0:
-                        print("Não existe nenhum contato com esse ID.")
-                    else:
-                        break
                 while True:
                     number = input('Novo número: ')
                     if number == '':
@@ -264,20 +196,31 @@ def updateContact():
                         break
                 try:
                     cursor.execute(f"""UPDATE contacts SET number = '{number}' WHERE id = {IDcontact}""")
+                    database.commit()
                 except sqlite3.Error as error:
                     print(f'Erro ao atualizar o contato: {error}')
-                while True:
-                    option = input('Deseja atualizar outro contato? (S/N) ').upper().strip()
-                    if option not in 'SN':
-                        print("Opção inválida. Tente novamente.")
-                    if option == 'S':
-                        updateContact()
-                    else:
-                        break
+        goUpdateContact()
+        goMenu()
                     
 def searchContact():
-    print('Sendo feito!')
-    goMenu()
+    if countItensDatabase() == 0:
+        print('Não há contatos para pesquisar.')
+        goMenu()
+    else:
+        nameInput = input('Insira o nome do contato que deseja pesquisar: ')
+        name = nameFix(nameInput)
+        try:
+            cursor.execute(f"""SELECT * FROM contacts WHERE name = '{name}'""")
+            result = cursor.fetchall()
+            if result == []:
+                print('Não existe nenhum contato com esse nome.')
+            else:
+                for row in result:
+                    print(f'Nome: {row[0]} | DDD: {row[1]} | Número: {row[2]} | ID: {row[3]}')
+        except sqlite3.Error as error:
+            print(f'Erro ao pesquisar o contato. Erro {error}')
+        goSearchContact()
+        goMenu()
 
 def listContacts():
     if countItensDatabase() == 0:
@@ -286,3 +229,43 @@ def listContacts():
     else:
         listContactsDatabase()
         goMenu()
+
+def goAddContact():
+    while True:
+        option = input('Deseja adicionar outro contato? (S/N) ').upper().strip()
+        if option not in 'SN':
+            print("Opção inválida. Tente novamente.")
+        if option == 'S':
+            addContact()
+        else:
+            break
+
+def goDeleteContact():
+    while True:
+        option = input('Deseja excluir outro contato? (S/N) ').upper().strip()
+        if option not in 'SN':
+            print("Opção inválida. Tente novamente.")
+        if option == 'S':
+            deleteContact()
+        else:
+            break
+
+def goUpdateContact():
+    while True:
+        option = input('Deseja atualizar outro contato? (S/N) ').upper().strip()
+        if option not in 'SN':
+            print("Opção inválida. Tente novamente.")
+        if option == 'S':
+            updateContact()
+        else:
+            break
+
+def goSearchContact():
+    while True:
+        option = input('Deseja pesquisar outro contato? (S/N) ').upper().strip()
+        if option not in 'SN':
+            print("Opção inválida. Tente novamente.")
+        if option == 'S':
+            searchContact()
+        else:
+            break

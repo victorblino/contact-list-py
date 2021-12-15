@@ -36,13 +36,10 @@ def countItensDatabase():
         print('Ocorreu algum erro ao ver contatos cadastrados.')
     
 def lastID():
-    database = sqlite3.connect('database.db')
-    cursor = database.cursor()
-    cursor.execute("""SELECT id FROM contacts""")
-    if cursor.fetchone() is None:
+    if countItensDatabase() == None:
         return 0
     else:
-        return cursor.fetchone()[0]
+        return countItensDatabase()
 
 def listContactsDatabase():
     database = sqlite3.connect('database.db')
